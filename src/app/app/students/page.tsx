@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentOrg } from "@/lib/org/getCurrentOrg";
+import { AddStudentForm } from "@/components/students/AddStudentForm";
+import { StudentList } from "@/components/students/StudentList";
 
 export default async function StudentsPage() {
   const org = await getCurrentOrg();
@@ -8,34 +10,41 @@ export default async function StudentsPage() {
 
   const supabase = await createClient();
 
-  const { data: students } = await supabase
-    .from("students")
-    .select("id, full_name, roll_no, phone, created_at")
+  const { data: classes } = await supabase
+    .from("classes")
+    .select("id, name, section")
     .eq("organization_id", org.organizationId)
     .order("created_at", { ascending: false });
+
+  const { data: rawStudents } = await supabase
+    .from("students")
+    .select(
+      "id, full_name, roll_no, phone, created_at, class:classes(id, name, section)"
+    )
+    .eq("organization_id", org.organizationId)
+    .order("created_at", { ascending: false });
+
+  // Normalize class (array/object issue fix)
+  const students =
+    rawStudents?.map((s) => ({
+      ...s,
+      class: Array.isArray(s.class) ? s.class[0] : s.class,
+    })) ?? [];
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Students</h1>
 
+      <AddStudentForm classes={classes ?? []} />
+
       <div className="border rounded-xl p-4">
         <h2 className="font-medium mb-2">Students List</h2>
-        <div className="space-y-2">
-          {(students ?? []).map((s) => (
-            <div key={s.id} className="flex justify-between border rounded-lg px-3 py-2">
-              <div>
-                <div className="font-medium">{s.full_name}</div>
-                <div className="text-sm opacity-70">
-                  Roll: {s.roll_no ?? "-"} • Phone: {s.phone ?? "-"}
-                </div>
-              </div>
-              <div className="text-sm opacity-60">{new Date(s.created_at).toLocaleDateString()}</div>
-            </div>
-          ))}
-          {(!students || students.length === 0) && (
-            <p className="text-sm opacity-70">No students yet. Next we will add “Add Student”.</p>
-          )}
-        </div>
+
+        {students.length > 0 ? (
+          <StudentList students={students} classes={classes ?? []} />
+        ) : (
+          <p className="text-sm opacity-70">No students yet.</p>
+        )}
       </div>
     </div>
   );
