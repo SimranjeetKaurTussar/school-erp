@@ -3,10 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrg } from "@/lib/org/getCurrentOrg";
 
-function receiptNo() {
-  return "RCPT-" + Math.floor(100000 + Math.random() * 900000);
-}
-
 // Create fee
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -16,7 +12,8 @@ export async function POST(req: Request) {
   }
 
   const org = await getCurrentOrg();
-  if (!org) return NextResponse.json({ error: "No organization" }, { status: 400 });
+  if (!org)
+    return NextResponse.json({ error: "No organization" }, { status: 400 });
 
   const body = await req.json();
   const studentId = String(body?.studentId ?? "").trim();
@@ -38,7 +35,8 @@ export async function POST(req: Request) {
     amount,
   });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 400 });
 
   return NextResponse.json({ ok: true });
 }
@@ -52,24 +50,35 @@ export async function PUT(req: Request) {
   }
 
   const org = await getCurrentOrg();
-  if (!org) return NextResponse.json({ error: "No organization" }, { status: 400 });
+  if (!org)
+    return NextResponse.json({ error: "No organization" }, { status: 400 });
 
   const body = await req.json();
   const feeId = String(body?.feeId ?? "").trim();
 
   const admin = createAdminClient();
+  const { data: receipt, error: recErr } = await admin.rpc(
+    "get_next_receipt_no",
+    {
+      org_id: org.organizationId,
+    },
+  );
+
+  if (recErr)
+    return NextResponse.json({ error: recErr.message }, { status: 400 });
 
   const { error } = await admin
     .from("fees")
     .update({
       status: "PAID",
       paid_at: new Date().toISOString(),
-      receipt_no: receiptNo(),
+      receipt_no: receipt,
     })
     .eq("id", feeId)
     .eq("organization_id", org.organizationId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 400 });
 
   return NextResponse.json({ ok: true });
 }

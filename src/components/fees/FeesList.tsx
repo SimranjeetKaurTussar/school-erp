@@ -43,9 +43,15 @@ export function FeesList({ fees }: { fees: any[] }) {
     <div className="border rounded-xl p-4 space-y-3">
       <div className="flex flex-wrap gap-2 items-center justify-between">
         <div className="flex gap-2">
-          <TabButton active={tab === "ALL"} onClick={() => setTab("ALL")}>All</TabButton>
-          <TabButton active={tab === "DUE"} onClick={() => setTab("DUE")}>Due</TabButton>
-          <TabButton active={tab === "PAID"} onClick={() => setTab("PAID")}>Paid</TabButton>
+          <TabButton active={tab === "ALL"} onClick={() => setTab("ALL")}>
+            All
+          </TabButton>
+          <TabButton active={tab === "DUE"} onClick={() => setTab("DUE")}>
+            Due
+          </TabButton>
+          <TabButton active={tab === "PAID"} onClick={() => setTab("PAID")}>
+            Paid
+          </TabButton>
         </div>
 
         <div className="flex gap-2 items-center">
@@ -56,7 +62,9 @@ export function FeesList({ fees }: { fees: any[] }) {
           >
             <option value="">All months</option>
             {months.map((m) => (
-              <option key={m} value={m}>{m}</option>
+              <option key={m} value={m}>
+                {m}
+              </option>
             ))}
           </select>
 
@@ -78,13 +86,26 @@ export function FeesList({ fees }: { fees: any[] }) {
             <div>
               <div className="font-medium">{f.student?.full_name}</div>
               <div className="text-sm opacity-70">
-                {f.fee_type} {f.month ? `(${f.month})` : ""} • ₹{f.amount} • {f.status}
+                {f.fee_type} {f.month ? `(${f.month})` : ""} • ₹{f.amount} •{" "}
+                {f.status}
               </div>
 
               {f.status === "PAID" && (
-                <div className="text-xs opacity-70">
-                  Receipt: {f.receipt_no ?? "-"} • Paid:{" "}
-                  {f.paid_at ? new Date(f.paid_at).toLocaleString() : "-"}
+                <div className="flex gap-2">
+                  <div className="text-xs opacity-70">
+                    Receipt: {f.receipt_no ?? "-"} • Paid:{" "}
+                    {f.paid_at
+                      ? String(f.paid_at).replace("T", " ").slice(0, 16)
+                      : "-"}
+                  </div>
+                  <a
+                    className="text-xs underline opacity-80"
+                    href={`/app/fees/receipt/${f.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open Receipt
+                  </a>
                 </div>
               )}
             </div>
