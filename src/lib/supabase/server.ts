@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
@@ -18,8 +18,8 @@ export function createClient() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // Server Components me set() kabhi-kabhi error deta hai.
-            // It's ok: session refresh middleware handle karega.
+            // Server Components me set() sometimes blocked hota hai
+            // middleware/route handlers handle refresh.
           }
         },
       },
